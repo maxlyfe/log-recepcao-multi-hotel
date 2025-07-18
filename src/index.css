@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.4s ease-out forwards;
+}
+
+.glass-effect {
+  @apply backdrop-blur-lg;
+}
+
+.glass-effect.dark {
+  @apply bg-gray-900/90;
+}
+
+.glass-effect.light {
+  @apply bg-white/95;
+}
+
+.luxury-input {
+  @apply transition-all duration-300 border-b-2 border-blue-200 focus:border-blue-400 bg-transparent;
+}
+
+.luxury-button {
+  @apply transition-all duration-300 transform hover:scale-105 active:scale-95;
+}
+
+/* Dark mode specific styles */
+.dark {
+  @apply text-gray-100;
+}
+
+.dark .luxury-input {
+  @apply border-blue-800 focus:border-blue-600 text-white bg-gray-800/50;
+}
+
+.dark .luxury-input::placeholder {
+  @apply text-gray-400;
+}
+
+.dark .glass-effect {
+  @apply border border-gray-800 bg-gray-900/90;
+}
+
+.dark label {
+  @apply text-gray-300;
+}
+
+.dark h2, .dark h3 {
+  @apply text-white;
+}
+
+.dark p {
+  @apply text-gray-300;
+}
+
+.dark .log-entry {
+  @apply bg-gray-800/50 border-gray-700;
+}
+
+.dark .comment-section {
+  @apply bg-gray-800/30;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 dark:bg-gray-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500 dark:bg-gray-600;
+}
+
+/* Money display */
+.money-display {
+  @apply glass-effect rounded-lg shadow-lg px-4 py-2 ml-auto mr-4;
+}
+
+.dark .money-display {
+  @apply bg-gray-800/90 text-white border border-gray-700;
+}
+
+.light .money-display {
+  @apply bg-white/90 text-gray-900 border border-gray-200;
+}
+
+/* Comments */
+.comments-badge {
+  @apply absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center;
+}
+
+.comment-thread {
+  @apply ml-8 border-l-4 border-blue-400 pl-4 mt-2;
+}
