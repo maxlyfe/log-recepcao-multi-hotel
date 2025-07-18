@@ -78,7 +78,6 @@ function NewLog() {
     } catch (error) {
       console.error('Error starting log:', error);
       alert(error instanceof Error ? error.message : 'Erro ao iniciar turno. Tente novamente.');
-      // Refresh the state to show the existing active log if one exists
       await initializeLogState();
     } finally {
       setIsStartingLog(false);
@@ -217,11 +216,11 @@ function NewLog() {
     <div className="money-display">
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-sm">Caixa:</span>
+          <span className="text-sm">Fundo de Caixa:</span>
           <span className="font-medium">{formatCurrency(values.cash_brl, 'BRL')}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm">Envelope:</span>
+          <span className="text-sm">Caixa do Dia:</span>
           <span className="font-medium">{formatCurrency(values.envelope_brl, 'BRL')}</span>
         </div>
         <div className="flex items-center justify-between">
@@ -237,7 +236,7 @@ function NewLog() {
       <div>
         <label className="block text-sm font-medium mb-2">
           <DollarSign className="h-4 w-4 inline mr-1" />
-          Caixa em R$
+          Fundo de Caixa
         </label>
         <input
           type="number"
@@ -252,7 +251,7 @@ function NewLog() {
       <div>
         <label className="block text-sm font-medium mb-2">
           <DollarSign className="h-4 w-4 inline mr-1" />
-          Envelope em R$
+          Caixa do Dia
         </label>
         <input
           type="number"
@@ -428,9 +427,8 @@ function NewLog() {
     console.log('Current log:', currentLog);
     console.log('Open entries:', openEntries);
 
-    // Get entries from previous logs that are still open (excluding current log entries)
     const previousLogEntries = openEntries
-      .filter(entry => entry.log_id !== currentLog.id) // Only entries from other logs
+      .filter(entry => entry.log_id !== currentLog.id)
       .map(entry => ({
         ...entry,
         fromPreviousLog: true,
@@ -441,7 +439,6 @@ function NewLog() {
         }
       }));
 
-    // Get entries from the current log only
     const currentLogEntries = currentLog.entries.map(entry => ({
       ...entry,
       fromPreviousLog: false,
@@ -452,7 +449,6 @@ function NewLog() {
       }
     }));
 
-    // Combine both arrays and sort by timestamp (newest first)
     const allEntries = [...previousLogEntries, ...currentLogEntries]
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .filter(entry => !entry.reply_to);
@@ -561,7 +557,6 @@ function NewLog() {
     ));
   };
 
-  // Show loading state while checking for active logs
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto animate-fade-in">
@@ -575,7 +570,6 @@ function NewLog() {
     );
   }
 
-  // Show error state if initialization failed
   if (hasInitError) {
     return (
       <div className="max-w-4xl mx-auto animate-fade-in">
@@ -653,8 +647,8 @@ function NewLog() {
                       <div>
                         <h4 className="text-sm font-medium mb-2">Valores Monetários:</h4>
                         <div className="space-y-1 text-sm">
-                          <div>Caixa: <span className="font-medium">{formatCurrency(previousLog.endValues.cash_brl, 'BRL')}</span></div>
-                          <div>Envelope: <span className="font-medium">{formatCurrency(previousLog.endValues.envelope_brl, 'BRL')}</span></div>
+                          <div>Fundo de Caixa: <span className="font-medium">{formatCurrency(previousLog.endValues.cash_brl, 'BRL')}</span></div>
+                          <div>Caixa do Dia: <span className="font-medium">{formatCurrency(previousLog.endValues.envelope_brl, 'BRL')}</span></div>
                           <div>Dólar: <span className="font-medium">{formatCurrency(previousLog.endValues.cash_usd, 'USD')}</span></div>
                         </div>
                       </div>

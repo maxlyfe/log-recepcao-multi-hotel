@@ -227,14 +227,14 @@ export default function AdminPanel() {
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600 flex items-center">
                         <DollarSign className="h-4 w-4 mr-1" />
-                        Caixa em R$
+                        Fundo de Caixa
                       </span>
                       <span className="font-medium">{formatCurrency(log.startValues?.cash_brl || 0)}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600 flex items-center">
                         <DollarSign className="h-4 w-4 mr-1" />
-                        Envelope em R$
+                        Caixa do Dia
                       </span>
                       <span className="font-medium">{formatCurrency(log.startValues?.envelope_brl || 0)}</span>
                     </div>
@@ -311,14 +311,14 @@ export default function AdminPanel() {
                       <div className="flex items-center justify-between">
                         <span className="text-gray-600 flex items-center">
                           <DollarSign className="h-4 w-4 mr-1" />
-                          Caixa em R$
+                          Fundo de Caixa
                         </span>
                         <span className="font-medium">{formatCurrency(log.endValues.cash_brl)}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-gray-600 flex items-center">
                           <DollarSign className="h-4 w-4 mr-1" />
-                          Envelope em R$
+                          Caixa do Dia
                         </span>
                         <span className="font-medium">{formatCurrency(log.endValues.envelope_brl)}</span>
                       </div>
