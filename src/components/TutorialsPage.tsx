@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
-import { Search, Plus, BookOpen, Edit, Trash2, Eye } from 'lucide-react';
+import { Search, Plus, BookOpen, Edit, Trash2, Eye, Share2 } from 'lucide-react';
 import { useLogStore } from '../store';
 import { useTutorials } from '../hooks/useTutorials';
 import CreateTutorialModal from './CreateTutorialModal';
 import TutorialViewer from './TutorialViewer';
+import ShareTutorialModal from './ShareTutorialModal';
+import PendingSharesNotification from './PendingSharesNotification';
 import type { Tutorial } from '../types/tutorial';
 
 export default function TutorialsPage() {
   const { selectedHotel } = useLogStore();
-  const { tutorials, isLoading, deleteTutorial } = useTutorials(selectedHotel?.id || '');
+  const { tutorials, pendingShares, isLoading, deleteTutorial, acceptShare, rejectShare } = useTutorials(selectedHotel?.id || '');
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTutorial, setEditingTutorial] = useState<Tutorial | null>(null);
   const [viewingTutorial, setViewingTutorial] = useState<string | null>(null);
+  const [sharingTutorial, setSharingTutorial] = useState<Tutorial | null>(null);
 
   const filteredTutorials = tutorials.filter(tutorial =>
     tutorial.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -23,10 +26,6 @@ export default function TutorialsPage() {
     if (window.confirm(`Tem certeza que deseja excluir o tutorial "${tutorial.title}"?`)) {
       await deleteTutorial(tutorial.id);
     }
-  };
-
-  const handleEditTutorial = (tutorial: Tutorial) => {
-    setEditingTutorial(tutorial);
   };
 
   const handleCloseModal = () => {
@@ -51,15 +50,16 @@ export default function TutorialsPage() {
           Tutoriais - {selectedHotel?.name}
         </h2>
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => { setEditingTutorial(null); setShowCreateModal(true); }}
           className="luxury-button px-6 py-3 rounded-xl text-white bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg flex items-center"
         >
           <Plus className="h-5 w-5 mr-2" />
           Novo Tutorial
         </button>
       </div>
+      
+      <PendingSharesNotification shares={pendingShares} onAccept={acceptShare} onReject={rejectShare} />
 
-      {/* Campo de Pesquisa */}
       <div className="glass-effect p-6 rounded-xl">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -73,8 +73,8 @@ export default function TutorialsPage() {
         </div>
       </div>
 
-      {/* Lista de Tutoriais */}
       <div className="glass-effect rounded-2xl shadow-xl">
+        {/* CORREÇÃO APLICADA AQUI: Removido os comentários inválidos */}
         {isLoading ? (
           <div className="p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -116,40 +116,20 @@ export default function TutorialsPage() {
                       {tutorial.title}
                     </h3>
                     {tutorial.description && (
-                      <p className="text-gray-600 dark:text-gray-400 mb-3">
-                        {tutorial.description}
-                      </p>
+                      <p className="text-gray-600 dark:text-gray-400 mb-3">{tutorial.description}</p>
                     )}
                     <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                      <span>Criado por {tutorial.created_by}</span>
-                      <span className="mx-2">•</span>
-                      <span>
-                        {new Date(tutorial.created_at).toLocaleDateString('pt-BR')}
-                      </span>
+                        <span>Criado por {tutorial.created_by}</span>
+                        <span className="mx-2">•</span>
+                        <span>{new Date(tutorial.created_at).toLocaleDateString('pt-BR')}</span>
+                        {tutorial.shared_from_id && <span className="ml-2 text-xs">(Copiado)</span>}
                     </div>
                   </div>
                   <div className="flex items-center space-x-2 ml-4">
-                    <button
-                      onClick={() => setViewingTutorial(tutorial.id)}
-                      className="p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                      title="Visualizar tutorial"
-                    >
-                      <Eye className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => handleEditTutorial(tutorial)}
-                      className="p-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-300 transition-colors"
-                      title="Editar tutorial"
-                    >
-                      <Edit className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(tutorial)}
-                      className="p-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-                      title="Excluir tutorial"
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </button>
+                    <button onClick={() => setViewingTutorial(tutorial.id)} className="p-2 text-blue-600 hover:text-blue-800" title="Visualizar"><Eye /></button>
+                    <button onClick={() => { setShowCreateModal(false); setEditingTutorial(tutorial); }} className="p-2 text-gray-600 hover:text-gray-800" title="Editar"><Edit /></button>
+                    <button onClick={() => setSharingTutorial(tutorial)} className="p-2 text-green-600 hover:text-green-800" title="Compartilhar"><Share2 /></button>
+                    <button onClick={() => handleDelete(tutorial)} className="p-2 text-red-600 hover:text-red-800" title="Excluir"><Trash2 /></button>
                   </div>
                 </div>
               </div>
@@ -158,13 +138,13 @@ export default function TutorialsPage() {
         )}
       </div>
 
-      {/* Modal de Criação/Edição */}
       {(showCreateModal || editingTutorial) && (
         <CreateTutorialModal
           tutorial={editingTutorial}
           onClose={handleCloseModal}
         />
       )}
+      {sharingTutorial && <ShareTutorialModal tutorial={sharingTutorial} onClose={() => setSharingTutorial(null)} />}
     </div>
   );
 }

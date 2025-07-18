@@ -48,3 +48,10 @@ export interface CreateOptionData {
   option_text: string;
   next_step_number?: number;
 }
+
+export interface TutorialShare {
+  id: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  source_hotel: { name: string };
+  tutorial: { title: string };
+}
