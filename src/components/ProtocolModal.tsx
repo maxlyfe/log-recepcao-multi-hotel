@@ -103,12 +103,12 @@ export default function ProtocolModal({ protocol, onClose, onSuccess }: Protocol
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t mt-4">
-            <div><label>Data do Protocolo *</label><input type="date" value={formData.protocol_date} onChange={e => handleChange('protocol_date', e.target.value)} className="w-full luxury-input"/></div>
+            {/* TEXTO ALTERADO AQUI */}
+            <div><label>Data Início do Problema *</label><input type="date" value={formData.protocol_date} onChange={e => handleChange('protocol_date', e.target.value)} className="w-full luxury-input"/></div>
             <div><label>Número do Protocolo *</label><input type="text" value={formData.protocol_number} onChange={e => handleChange('protocol_number', e.target.value)} className="w-full luxury-input"/></div>
             <div><label>Nome do Atendente</label><input type="text" value={formData.attendant_name} onChange={e => handleChange('attendant_name', e.target.value)} className="w-full luxury-input"/></div>
             <div><label>Tipo de Reclamação</label><input type="text" value={formData.complaint_type} onChange={e => handleChange('complaint_type', e.target.value)} className="w-full luxury-input"/></div>
             <div><label>Data/Hora da Reclamação *</label><input type="datetime-local" value={formData.complaint_timestamp} onChange={e => handleChange('complaint_timestamp', e.target.value)} className="w-full luxury-input"/></div>
-            {/* CAMPO REINTRODUZIDO AQUI */}
             <div><label>Data/Hora da Solução</label><input type="datetime-local" value={formData.resolution_timestamp || ''} onChange={e => handleChange('resolution_timestamp', e.target.value)} className="w-full luxury-input"/></div>
             <div className="md:col-span-2"><label>Comentário</label><textarea value={formData.comment} onChange={e => handleChange('comment', e.target.value)} rows={3} className="w-full luxury-input"></textarea></div>
           </div>

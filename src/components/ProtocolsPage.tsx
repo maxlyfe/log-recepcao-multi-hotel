@@ -38,11 +38,13 @@ export default function ProtocolsPage() {
     return format(new Date(dateString), "dd/MM/yy HH:mm", { locale: ptBR });
   };
 
-  // Se uma empresa foi selecionada, mostra a tela de detalhes
   if (selectedCompany) {
+    const companyData = protocolsByCompany.find(p => p.company.id === selectedCompany.id);
     return (
       <CompanyProtocolsDetail 
         company={selectedCompany} 
+        protocols={companyData?.protocols || []}
+        isLoading={isLoading}
         onBack={() => setSelectedCompany(null)}
         onEdit={handleEdit}
         onDelete={handleDelete}
@@ -51,7 +53,6 @@ export default function ProtocolsPage() {
     );
   }
 
-  // Senão, mostra a tela principal com os cards
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -73,10 +74,10 @@ export default function ProtocolsPage() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {filteredData.map(({ company, protocols }) => (
-            <div key={company.id} className="glass-effect rounded-2xl shadow-xl overflow-hidden flex flex-col">
-              <h3 className="text-xl font-medium p-4 bg-white/10 dark:bg-gray-800/50">{company.name}</h3>
+            <div key={company.id} onClick={() => setSelectedCompany(company)} className="glass-effect rounded-2xl shadow-xl overflow-hidden flex flex-col text-left hover:ring-2 hover:ring-blue-500 transition-all duration-300 cursor-pointer">
+              <h3 className="text-xl font-medium p-4 bg-white/10 dark:bg-gray-800/50 w-full">{company.name}</h3>
               <div className="p-4 space-y-3 flex-grow">
-                {protocols.slice(0, 5).map(p => (
+                {protocols.slice(0, 3).map(p => (
                   <div key={p.id} className="p-3 bg-white/50 dark:bg-gray-800/30 rounded-lg">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -87,7 +88,8 @@ export default function ProtocolsPage() {
                             {p.resolution_timestamp && (<p className="text-green-600 dark:text-green-400">Solucionado em: {formatDate(p.resolution_timestamp)}</p>)}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                      {/* CORREÇÃO: Adicionado stopPropagation para os botões internos */}
+                      <div className="flex items-center gap-2 flex-shrink-0 ml-2" onClick={e => e.stopPropagation()}>
                         {p.resolution_timestamp ? 
                           (<CheckCircle className="h-5 w-5 text-green-500" title={`Solucionado em ${formatDate(p.resolution_timestamp)}`}/>) 
                           : 
@@ -100,9 +102,9 @@ export default function ProtocolsPage() {
                   </div>
                 ))}
               </div>
-              <button onClick={() => setSelectedCompany(company)} className="w-full text-center p-2 text-sm text-blue-600 hover:underline">
-                Ver todos ({protocols.length})
-              </button>
+              <div className="w-full text-center p-2 bg-gray-50 dark:bg-gray-900/50 text-sm text-blue-600 dark:text-blue-400 font-medium mt-auto">
+                Ver Histórico Completo ({protocols.length})
+              </div>
             </div>
           ))}
         </div>
