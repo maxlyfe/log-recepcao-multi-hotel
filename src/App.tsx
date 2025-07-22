@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
-import { Hotel, History, Moon, Sun, BookOpen, Briefcase, FileText, AlertTriangle } from 'lucide-react'; // Adicionar AlertTriangle
+import { Hotel, History, Moon, Sun, BookOpen, Briefcase, FileText, AlertTriangle, UtensilsCrossed } from 'lucide-react';
 import NewLog from './components/NewLog';
 import AdminPanel from './components/AdminPanel';
 import TutorialsPage from './components/TutorialsPage';
 import CompaniesPage from './components/CompaniesPage';
 import ProtocolsPage from './components/ProtocolsPage';
+import MapFapPage from './components/MapFapPage'; // IMPORTAR NOVA PÁGINA
 import HotelSelector from './components/HotelSelector';
 import HotelSelectionPage from './components/HotelSelectionPage';
 import { useTheme } from './hooks/useTheme';
@@ -13,19 +14,16 @@ import { useLogStore } from './store';
 
 function App() {
   const { isDark, toggleTheme } = useTheme();
-  // Pegar o novo estado e a função do store
-  const { selectedHotel, hasOpenProtocols, checkOpenProtocols } = useLogStore();
+  const { selectedHotel, hasOpenProtocols, hasPendingMapFap, checkOpenProtocols, checkPendingMapFap } = useLogStore();
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDark);
-  }, [isDark]);
+  useEffect(() => { document.documentElement.classList.toggle('dark', isDark); }, [isDark]);
 
-  // Verifica protocolos abertos sempre que o hotel selecionado mudar
   useEffect(() => {
     if (selectedHotel) {
       checkOpenProtocols();
+      checkPendingMapFap();
     }
-  }, [selectedHotel, checkOpenProtocols]);
+  }, [selectedHotel, checkOpenProtocols, checkPendingMapFap]);
 
   const navButtonClass = "flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-colors duration-300 rounded-full shadow-sm hover:shadow-md";
 
@@ -63,8 +61,21 @@ function App() {
                   <Link to="/protocolos" className={`relative ${navButtonClass} ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-900 hover:text-blue-700'}`}>
                     <FileText className="h-5 w-5" />
                     <span>Protocolos</span>
-                    {/* ÍCONE DE ALERTA CONDICIONAL */}
                     {hasOpenProtocols && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-yellow-500 items-center justify-center">
+                          <AlertTriangle className="h-3 w-3 text-white" />
+                        </span>
+                      </span>
+                    )}
+                  </Link>
+                )}
+                {/* NOVO BOTÃO MAP/FAP */}
+                {selectedHotel && (
+                  <Link to="/map-fap" className={`relative ${navButtonClass} ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-900 hover:text-blue-700'}`}>
+                    <UtensilsCrossed className="h-5 w-5" /><span>MAP/FAP</span>
+                    {hasPendingMapFap && (
                       <span className="absolute -top-1 -right-1 flex h-4 w-4">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-4 w-4 bg-yellow-500 items-center justify-center">
@@ -89,6 +100,8 @@ function App() {
             <Route path="/historico" element={selectedHotel ? <AdminPanel /> : <Navigate to="/" replace />} />
             <Route path="/empresas" element={selectedHotel ? <CompaniesPage /> : <Navigate to="/" replace />} />
             <Route path="/protocolos" element={selectedHotel ? <ProtocolsPage /> : <Navigate to="/" replace />} />
+            {/* NOVA ROTA MAP/FAP */}
+            <Route path="/map-fap" element={selectedHotel ? <MapFapPage /> : <Navigate to="/" replace />} />
             <Route path="/tutoriais" element={selectedHotel ? <TutorialsPage /> : <Navigate to="/" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

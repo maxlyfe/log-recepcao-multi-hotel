@@ -115,3 +115,15 @@
 .comment-thread {
   @apply ml-8 border-l-4 border-blue-400 pl-4 mt-2;
 }
+
+.embla__button {
+  @apply w-8 h-8 rounded-full bg-white/50 dark:bg-gray-800/50 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-md transition-opacity;
+}
+
+.embla__button:disabled {
+  @apply opacity-30 cursor-not-allowed;
+}
+
+.embla__button:not(:disabled):hover {
+  @apply bg-white/80 dark:bg-gray-700/80;
+}

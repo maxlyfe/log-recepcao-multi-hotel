@@ -62,6 +62,7 @@ export type LogStore = {
   isLoading: boolean;
   hasInitError: boolean;
   hasOpenProtocols: boolean;
+  hasPendingMapFap: boolean; // NOVA PROPRIEDADE
   fetchHotels: () => Promise<void>;
   selectHotel: (hotel: Hotel) => Promise<void>;
   verifyHotelPin: (hotel: Hotel, pin: string) => Promise<boolean>;
@@ -81,6 +82,7 @@ export type LogStore = {
   editShiftValues: (logId: string, newValues: ShiftValues, editor: string) => Promise<void>;
   fetchEditHistory: (entityType: 'log_entry' | 'shift_values', entityId: string) => Promise<void>;
   checkOpenProtocols: () => Promise<void>;
+  checkPendingMapFap: () => Promise<void>; // NOVA FUNÇÃO
 };
 
 export const useLogStore = create<LogStore>((set, get) => ({
@@ -94,6 +96,7 @@ export const useLogStore = create<LogStore>((set, get) => ({
   isLoading: true,
   hasInitError: false,
   hasOpenProtocols: false,
+  hasPendingMapFap: false, // VALOR INICIAL
 
   fetchHotels: async () => {
     const { data, error } = await supabase.from('hotels').select('*');
@@ -131,12 +134,13 @@ export const useLogStore = create<LogStore>((set, get) => ({
   initializeLogState: async () => {
     set({ isLoading: true, hasInitError: false });
     try {
-      const { fetchCurrentLog, fetchPreviousLog, fetchOpenEntries, checkOpenProtocols } = get();
+      const { fetchCurrentLog, fetchPreviousLog, fetchOpenEntries, checkOpenProtocols, checkPendingMapFap } = get();
       await Promise.all([
         fetchCurrentLog(),
         fetchPreviousLog(),
         fetchOpenEntries(),
         checkOpenProtocols(),
+        checkPendingMapFap(), // ADICIONADO AQUI
       ]);
     } catch (error) {
       console.error('Error during initialization:', error);
@@ -156,6 +160,31 @@ export const useLogStore = create<LogStore>((set, get) => ({
     const { count, error } = await supabase.from('protocols').select('*', { count: 'exact', head: true }).eq('hotel_id', selectedHotel.id).is('resolution_timestamp', null);
     if (error) console.error("Error checking open protocols:", error);
     set({ hasOpenProtocols: (count || 0) > 0 });
+  },
+
+  // NOVA FUNÇÃO
+  checkPendingMapFap: async () => {
+    const { selectedHotel } = get();
+    if (!selectedHotel) return set({ hasPendingMapFap: false });
+
+    const today = new Date().toISOString().split('T')[0];
+
+    const { data, error } = await supabase
+      .from('map_fap_reservations')
+      .select('id')
+      .eq('hotel_id', selectedHotel.id)
+      .lte('start_date', today)
+      .gte('end_date', today);
+    
+    if (error) {
+      console.error("Error checking pending MAP/FAP:", error);
+      set({ hasPendingMapFap: false });
+      return;
+    }
+    
+    // UMA LÓGICA MAIS COMPLEXA PODERIA SER ADICIONADA AQUI NO FUTURO
+    // PARA VERIFICAR SE JÁ FOI LANÇADO NO CHECKLIST
+    set({ hasPendingMapFap: (data?.length || 0) > 0 });
   },
 
   fetchCurrentLog: async () => {
@@ -220,24 +249,11 @@ export const useLogStore = create<LogStore>((set, get) => ({
   addLog: async ({ receptionist, startValues }) => {
     const { selectedHotel, initializeLogState } = get();
     if (!selectedHotel) return;
-
     const valuesToInsert = {
-        cash_brl_start: startValues.cash_brl,
-        envelope_brl_start: startValues.envelope_brl,
-        cash_usd_start: startValues.cash_usd,
-        pens_count_start: startValues.pens_count,
-        calculator_start: startValues.calculator,
-        phone_start: startValues.phone,
-        car_key_start: startValues.car_key,
-        adapter_start: startValues.adapter,
-        umbrella_start: startValues.umbrella,
-        highlighter_start: startValues.highlighter,
-        cards_towels_start: startValues.cards_towels,
+        cash_brl_start: startValues.cash_brl, envelope_brl_start: startValues.envelope_brl, cash_usd_start: startValues.cash_usd, pens_count_start: startValues.pens_count, calculator_start: startValues.calculator, phone_start: startValues.phone, car_key_start: startValues.car_key, adapter_start: startValues.adapter, umbrella_start: startValues.umbrella, highlighter_start: startValues.highlighter, cards_towels_start: startValues.cards_towels,
     };
-
     const { data, error } = await supabase.from('logs').insert([{ receptionist, start_time: new Date(), status: 'active', hotel_id: selectedHotel.id, ...valuesToInsert }]).select().single();
     if (error) throw error;
-    set({ currentLog: { ...data, entries: [] } });
     await initializeLogState();
   },
 
@@ -252,21 +268,9 @@ export const useLogStore = create<LogStore>((set, get) => ({
   finishCurrentLog: async (endValues) => {
     const { currentLog, initializeLogState } = get();
     if (!currentLog) return;
-
     const valuesToUpdate = {
-        cash_brl_end: endValues.cash_brl,
-        envelope_brl_end: endValues.envelope_brl,
-        cash_usd_end: endValues.cash_usd,
-        pens_count_end: endValues.pens_count,
-        calculator_end: endValues.calculator,
-        phone_end: endValues.phone,
-        car_key_end: endValues.car_key,
-        adapter_end: endValues.adapter,
-        umbrella_end: endValues.umbrella,
-        highlighter_end: endValues.highlighter,
-        cards_towels_end: endValues.cards_towels,
+        cash_brl_end: endValues.cash_brl, envelope_brl_end: endValues.envelope_brl, cash_usd_end: endValues.cash_usd, pens_count_end: endValues.pens_count, calculator_end: endValues.calculator, phone_end: endValues.phone, car_key_end: endValues.car_key, adapter_end: endValues.adapter, umbrella_end: endValues.umbrella, highlighter_end: endValues.highlighter, cards_towels_end: endValues.cards_towels,
     };
-
     const { error } = await supabase.from('logs').update({ end_time: new Date(), status: 'completed', ...valuesToUpdate }).eq('id', currentLog.id);
     if (error) throw error;
     await initializeLogState();
