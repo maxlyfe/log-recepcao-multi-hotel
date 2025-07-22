@@ -6,7 +6,7 @@ import AdminPanel from './components/AdminPanel';
 import TutorialsPage from './components/TutorialsPage';
 import CompaniesPage from './components/CompaniesPage';
 import ProtocolsPage from './components/ProtocolsPage';
-import MapFapPage from './components/MapFapPage'; // IMPORTAR NOVA PÁGINA
+import MapFapPage from './components/MapFapPage';
 import HotelSelector from './components/HotelSelector';
 import HotelSelectionPage from './components/HotelSelectionPage';
 import { useTheme } from './hooks/useTheme';
@@ -25,22 +25,23 @@ function App() {
     }
   }, [selectedHotel, checkOpenProtocols, checkPendingMapFap]);
 
-  const navButtonClass = "flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-colors duration-300 rounded-full shadow-sm hover:shadow-md";
+  const navButtonClass = "flex-shrink-0 flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-colors duration-300 rounded-full shadow-sm hover:shadow-md";
 
   return (
     <BrowserRouter>
       <div className={`min-h-screen bg-gradient-to-br ${ isDark ? 'from-gray-900 via-gray-800 to-gray-900 text-white' : 'from-blue-50 via-white to-blue-50 text-gray-900'} transition-colors duration-300`}>
-        <header className={`glass-effect ${isDark ? 'dark' : 'light'} shadow-lg`}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex items-center justify-between">
+        <header className={`glass-effect ${isDark ? 'dark' : 'light'} shadow-lg sticky top-0 z-40`}>
+          <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4">
+            {/* CORREÇÃO: Layout do header ajustado para responsividade */}
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <Link to="/" className="flex items-center space-x-3 hover:opacity-90 transition-all duration-300 group">
                 <Hotel className={`h-10 w-10 ${isDark ? 'text-blue-400' : 'text-blue-600'} transition-transform duration-300 group-hover:rotate-12`} />
                 <div>
-                  <h1 className="text-3xl font-serif">{selectedHotel?.name || 'Sistema de Log'}</h1>
-                  <p className={`text-sm ${isDark ? 'text-blue-400' : 'text-blue-700'} font-light`}>Sistema de Registro - Recepção</p>
+                  <h1 className="text-2xl md:text-3xl font-serif">{selectedHotel?.name || 'Sistema de Log'}</h1>
+                  <p className={`text-xs md:text-sm ${isDark ? 'text-blue-400' : 'text-blue-700'} font-light`}>Sistema de Registro - Recepção</p>
                 </div>
               </Link>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 flex-wrap justify-end">
                 <button onClick={toggleTheme} className={`p-2 rounded-full ${isDark ? 'bg-gray-800 text-yellow-400 hover:bg-gray-700' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'} transition-colors duration-300`}>
                   {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </button>
@@ -71,7 +72,6 @@ function App() {
                     )}
                   </Link>
                 )}
-                {/* NOVO BOTÃO MAP/FAP */}
                 {selectedHotel && (
                   <Link to="/map-fap" className={`relative ${navButtonClass} ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-900 hover:text-blue-700'}`}>
                     <UtensilsCrossed className="h-5 w-5" /><span>MAP/FAP</span>
@@ -100,7 +100,6 @@ function App() {
             <Route path="/historico" element={selectedHotel ? <AdminPanel /> : <Navigate to="/" replace />} />
             <Route path="/empresas" element={selectedHotel ? <CompaniesPage /> : <Navigate to="/" replace />} />
             <Route path="/protocolos" element={selectedHotel ? <ProtocolsPage /> : <Navigate to="/" replace />} />
-            {/* NOVA ROTA MAP/FAP */}
             <Route path="/map-fap" element={selectedHotel ? <MapFapPage /> : <Navigate to="/" replace />} />
             <Route path="/tutoriais" element={selectedHotel ? <TutorialsPage /> : <Navigate to="/" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />

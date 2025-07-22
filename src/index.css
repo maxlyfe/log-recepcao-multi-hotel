@@ -25,11 +25,12 @@
 }
 
 .glass-effect.dark {
-  @apply bg-gray-900/90;
+  @apply bg-gray-900/90 border border-gray-800;
 }
 
+/* CORREÇÃO: Adicionada borda e sombra para maior contraste no modo claro */
 .glass-effect.light {
-  @apply bg-white/95;
+  @apply bg-white/80 border border-gray-200/70 shadow-sm;
 }
 
 .luxury-input {
@@ -51,10 +52,6 @@
 
 .dark .luxury-input::placeholder {
   @apply text-gray-400;
-}
-
-.dark .glass-effect {
-  @apply border border-gray-800 bg-gray-900/90;
 }
 
 .dark label {
@@ -116,6 +113,7 @@
   @apply ml-8 border-l-4 border-blue-400 pl-4 mt-2;
 }
 
+/* Estilos para os botões do carrossel */
 .embla__button {
   @apply w-8 h-8 rounded-full bg-white/50 dark:bg-gray-800/50 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-md transition-opacity;
 }
