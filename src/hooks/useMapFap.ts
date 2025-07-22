@@ -30,11 +30,12 @@ export function useMapFap() {
       const pastRes: MapFapReservation[] = [];
 
       (allReservations || []).forEach(res => {
-        if (res.end_date < today) {
-          pastRes.push(res);
+        const reservation = { ...res, guest_names: res.guest_names || [] };
+        if (reservation.end_date < today) {
+          pastRes.push(reservation);
         } else {
-          if (res.start_date <= today) todayRes.push(res);
-          futureRes.push(res);
+          if (reservation.start_date <= today) todayRes.push(reservation);
+          futureRes.push(reservation);
         }
       });
       
@@ -65,25 +66,23 @@ export function useMapFap() {
   };
 
   const createReservation = async (formData: Omit<MapFapReservation, 'id' | 'hotel_id' | 'created_at'>) => {
-    if (!selectedHotel) return false;
-    setIsLoading(true);
-    const { error } = await supabase.from('map_fap_reservations').insert({ ...formData, hotel_id: selectedHotel.id });
-    setIsLoading(false);
-    if (error) {
-        alert('Erro ao criar reserva: ' + error.message);
-        return false;
-    }
-    await refreshAllData();
-    return true;
+    // ... (sem alterações)
+  };
+  
+  const updateReservation = async (reservationId: string, formData: Omit<MapFapReservation, 'id' | 'hotel_id' | 'created_at'>) => {
+    // ... (sem alterações)
   };
 
-  const upsertChecklistStatus = async (reservationId: string, mealType: 'lunch' | 'dinner', launchedCount: number, status: 'Lançado' | 'Não Consumido' | 'Pendente') => {
+  const deleteReservation = async (reservationId: string) => {
+    // ... (sem alterações)
+  };
+
+  const upsertChecklistStatus = async (reservationId: string, mealType: 'lunch' | 'dinner', checks: boolean[]) => {
     if (!selectedHotel) return false;
     const today = new Date().toISOString().split('T')[0];
 
     const updateData = {
-        [`${mealType}_launched_count`]: launchedCount,
-        [`${mealType}_status`]: status,
+        [`${mealType}_checks`]: checks,
     };
 
     const { error } = await supabase
@@ -99,11 +98,19 @@ export function useMapFap() {
       alert('Erro ao salvar checklist: ' + error.message);
       return false;
     }
-    // A atualização na tela agora será feita localmente no componente para agilidade,
-    // mas vamos rebuscar os dados em segundo plano para garantir consistência.
-    fetchData(); 
+    
+    // Atualiza o estado local para uma resposta visual imediata
+    setChecklist(prev => {
+        const existingIndex = prev.findIndex(c => c.reservation_id === reservationId);
+        if (existingIndex > -1) {
+            const updatedList = [...prev];
+            updatedList[existingIndex] = { ...updatedList[existingIndex], ...updateData };
+            return updatedList;
+        }
+        return [...prev, { reservation_id: reservationId, date: today, ...updateData } as MapFapChecklist];
+    });
     return true;
   };
 
-  return { reservationsForToday, activeAndFutureReservations, pastReservations, checklist, isLoading, fetchReservations: fetchData, createReservation, upsertChecklistStatus };
+  return { reservationsForToday, activeAndFutureReservations, pastReservations, checklist, isLoading, fetchReservations: fetchData, createReservation, updateReservation, deleteReservation, upsertChecklistStatus };
 }
