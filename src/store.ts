@@ -62,7 +62,7 @@ export type LogStore = {
   isLoading: boolean;
   hasInitError: boolean;
   hasOpenProtocols: boolean;
-  hasPendingMapFap: boolean; // NOVA PROPRIEDADE
+  hasPendingMapFap: boolean;
   fetchHotels: () => Promise<void>;
   selectHotel: (hotel: Hotel) => Promise<void>;
   verifyHotelPin: (hotel: Hotel, pin: string) => Promise<boolean>;
@@ -82,7 +82,7 @@ export type LogStore = {
   editShiftValues: (logId: string, newValues: ShiftValues, editor: string) => Promise<void>;
   fetchEditHistory: (entityType: 'log_entry' | 'shift_values', entityId: string) => Promise<void>;
   checkOpenProtocols: () => Promise<void>;
-  checkPendingMapFap: () => Promise<void>; // NOVA FUNÇÃO
+  checkPendingMapFap: () => Promise<void>;
 };
 
 export const useLogStore = create<LogStore>((set, get) => ({
@@ -96,7 +96,7 @@ export const useLogStore = create<LogStore>((set, get) => ({
   isLoading: true,
   hasInitError: false,
   hasOpenProtocols: false,
-  hasPendingMapFap: false, // VALOR INICIAL
+  hasPendingMapFap: false,
 
   fetchHotels: async () => {
     const { data, error } = await supabase.from('hotels').select('*');
@@ -140,7 +140,7 @@ export const useLogStore = create<LogStore>((set, get) => ({
         fetchPreviousLog(),
         fetchOpenEntries(),
         checkOpenProtocols(),
-        checkPendingMapFap(), // ADICIONADO AQUI
+        checkPendingMapFap(),
       ]);
     } catch (error) {
       console.error('Error during initialization:', error);
@@ -162,29 +162,64 @@ export const useLogStore = create<LogStore>((set, get) => ({
     set({ hasOpenProtocols: (count || 0) > 0 });
   },
 
-  // NOVA FUNÇÃO
   checkPendingMapFap: async () => {
     const { selectedHotel } = get();
     if (!selectedHotel) return set({ hasPendingMapFap: false });
 
     const today = new Date().toISOString().split('T')[0];
 
-    const { data, error } = await supabase
+    const { data: activeReservations, error: resError } = await supabase
       .from('map_fap_reservations')
-      .select('id')
+      .select('id, pension_type, start_date, end_date, guest_names')
       .eq('hotel_id', selectedHotel.id)
       .lte('start_date', today)
       .gte('end_date', today);
-    
-    if (error) {
-      console.error("Error checking pending MAP/FAP:", error);
-      set({ hasPendingMapFap: false });
-      return;
+
+    if (resError || !activeReservations || activeReservations.length === 0) {
+      if(resError) console.error("Error checking pending MAP/FAP:", resError);
+      return set({ hasPendingMapFap: false });
     }
-    
-    // UMA LÓGICA MAIS COMPLEXA PODERIA SER ADICIONADA AQUI NO FUTURO
-    // PARA VERIFICAR SE JÁ FOI LANÇADO NO CHECKLIST
-    set({ hasPendingMapFap: (data?.length || 0) > 0 });
+
+    const reservationIds = activeReservations.map(r => r.id);
+    const { data: checklistData, error: checklistError } = await supabase
+      .from('map_fap_checklist')
+      .select('reservation_id, lunch_checks, dinner_checks')
+      .eq('hotel_id', selectedHotel.id)
+      .eq('date', today)
+      .in('reservation_id', reservationIds);
+
+    if (checklistError) {
+      console.error("Error fetching checklist for pending check:", checklistError);
+      return set({ hasPendingMapFap: true }); // Assume pending if checklist fails
+    }
+
+    let hasPending = false;
+    for (const res of activeReservations) {
+      const checklist = checklistData?.find(c => c.reservation_id === res.id);
+      const guestCount = (res.guest_names || []).length;
+      const isCheckinDay = res.start_date === today;
+      const isCheckoutDay = res.end_date === today;
+
+      const hasLunch = res.pension_type === 'FAP' && !isCheckinDay;
+      const hasDinner = (res.pension_type === 'FAP' && !isCheckoutDay) || res.pension_type === 'MAP';
+
+      if (hasLunch) {
+        const lunchChecks = checklist?.lunch_checks || [];
+        if (lunchChecks.filter(Boolean).length < guestCount) {
+          hasPending = true;
+          break;
+        }
+      }
+      if (hasDinner) {
+        const dinnerChecks = checklist?.dinner_checks || [];
+        if (dinnerChecks.filter(Boolean).length < guestCount) {
+          hasPending = true;
+          break;
+        }
+      }
+    }
+
+    set({ hasPendingMapFap: hasPending });
   },
 
   fetchCurrentLog: async () => {

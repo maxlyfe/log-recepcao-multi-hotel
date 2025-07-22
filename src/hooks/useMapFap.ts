@@ -65,11 +65,14 @@ export function useMapFap() {
     await checkPendingMapFap();
   };
 
-  const createReservation = async (formData: Omit<MapFapReservation, 'id' | 'hotel_id' | 'created_at'>) => {
+  const createReservation = async (formData: Omit<MapFapReservation, 'id' | 'hotel_id' | 'created_at' | 'guest_count'>) => {
     if (!selectedHotel) return false;
     setIsLoading(true);
-    const { guest_count, ...dataToInsert } = formData as any;
-    const { error } = await supabase.from('map_fap_reservations').insert({ ...dataToInsert, hotel_id: selectedHotel.id });
+    
+    const { error } = await supabase
+      .from('map_fap_reservations')
+      .insert({ ...formData, hotel_id: selectedHotel.id });
+    
     setIsLoading(false);
     if (error) {
         alert('Erro ao criar reserva: ' + error.message);
@@ -78,21 +81,20 @@ export function useMapFap() {
     await refreshAllData();
     return true;
   };
-  
-  const updateReservation = async (reservationId: string, formData: Omit<MapFapReservation, 'id' | 'hotel_id' | 'created_at'>) => {
+
+  const updateReservation = async (reservationId: string, formData: Omit<MapFapReservation, 'id' | 'hotel_id' | 'created_at' | 'guest_count'>) => {
     setIsLoading(true);
-    const { guest_count, ...dataToUpdate } = formData as any;
     const { error } = await supabase.rpc('update_map_fap_reservation', {
         p_reservation_id: reservationId,
-        p_pension_type: dataToUpdate.pension_type,
-        p_reservation_number: dataToUpdate.reservation_number,
-        p_start_date: dataToUpdate.start_date,
-        p_end_date: dataToUpdate.end_date,
-        p_uh_number: dataToUpdate.uh_number,
-        p_guest_names: dataToUpdate.guest_names,
-        p_add_ons: dataToUpdate.add_ons,
-        p_repeat_add_ons: dataToUpdate.repeat_add_ons,
-        p_comment: dataToUpdate.comment,
+        p_pension_type: formData.pension_type,
+        p_reservation_number: formData.reservation_number,
+        p_start_date: formData.start_date,
+        p_end_date: formData.end_date,
+        p_uh_number: formData.uh_number,
+        p_guest_names: formData.guest_names,
+        p_add_ons: formData.add_ons,
+        p_repeat_add_ons: formData.repeat_add_ons,
+        p_comment: formData.comment,
     });
     setIsLoading(false);
     if (error) {
@@ -133,7 +135,6 @@ export function useMapFap() {
       alert('Erro ao salvar checklist: ' + error.message);
       return false;
     }
-    
     setChecklist(prev => {
         const existingIndex = prev.findIndex(c => c.reservation_id === reservationId);
         if (existingIndex > -1) {
@@ -143,6 +144,7 @@ export function useMapFap() {
         }
         return [...prev, { reservation_id: reservationId, date: today, ...updateData } as MapFapChecklist];
     });
+    await checkPendingMapFap();
     return true;
   };
 
