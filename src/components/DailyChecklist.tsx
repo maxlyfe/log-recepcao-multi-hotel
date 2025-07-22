@@ -3,7 +3,6 @@ import { Moon, Sun, User, Users, Utensils } from 'lucide-react';
 import type { MapFapReservation, MapFapChecklist } from '../types/mapfap';
 import { useMapFap } from '../hooks/useMapFap';
 
-// --- Subcomponente para o Card do Checklist ---
 interface ChecklistCardProps {
   reservation: MapFapReservation;
   checklistEntry: MapFapChecklist | undefined;
@@ -38,10 +37,8 @@ const ChecklistCard = ({ reservation, checklistEntry }: ChecklistCardProps) => {
     const newChecks = [...currentChecks];
     newChecks[index] = !newChecks[index];
     
-    // Atualiza o estado local para uma resposta visual imediata
     setChecks(prev => ({ ...prev, [mealType]: newChecks }));
     
-    // Envia a lista completa de checks para o banco
     upsertChecklistStatus(reservation.id, mealType, newChecks);
   };
 

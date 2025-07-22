@@ -66,24 +66,59 @@ export function useMapFap() {
   };
 
   const createReservation = async (formData: Omit<MapFapReservation, 'id' | 'hotel_id' | 'created_at'>) => {
-    // ... (sem alterações)
+    if (!selectedHotel) return false;
+    setIsLoading(true);
+    const { guest_count, ...dataToInsert } = formData as any;
+    const { error } = await supabase.from('map_fap_reservations').insert({ ...dataToInsert, hotel_id: selectedHotel.id });
+    setIsLoading(false);
+    if (error) {
+        alert('Erro ao criar reserva: ' + error.message);
+        return false;
+    }
+    await refreshAllData();
+    return true;
   };
   
   const updateReservation = async (reservationId: string, formData: Omit<MapFapReservation, 'id' | 'hotel_id' | 'created_at'>) => {
-    // ... (sem alterações)
+    setIsLoading(true);
+    const { guest_count, ...dataToUpdate } = formData as any;
+    const { error } = await supabase.rpc('update_map_fap_reservation', {
+        p_reservation_id: reservationId,
+        p_pension_type: dataToUpdate.pension_type,
+        p_reservation_number: dataToUpdate.reservation_number,
+        p_start_date: dataToUpdate.start_date,
+        p_end_date: dataToUpdate.end_date,
+        p_uh_number: dataToUpdate.uh_number,
+        p_guest_names: dataToUpdate.guest_names,
+        p_add_ons: dataToUpdate.add_ons,
+        p_repeat_add_ons: dataToUpdate.repeat_add_ons,
+        p_comment: dataToUpdate.comment,
+    });
+    setIsLoading(false);
+    if (error) {
+        alert('Erro ao atualizar reserva: ' + error.message);
+        return false;
+    }
+    await refreshAllData();
+    return true;
   };
 
   const deleteReservation = async (reservationId: string) => {
-    // ... (sem alterações)
+    setIsLoading(true);
+    const { error } = await supabase.from('map_fap_reservations').delete().eq('id', reservationId);
+    setIsLoading(false);
+    if(error) {
+        alert('Erro ao deletar reserva: ' + error.message);
+        return false;
+    }
+    await refreshAllData();
+    return true;
   };
 
   const upsertChecklistStatus = async (reservationId: string, mealType: 'lunch' | 'dinner', checks: boolean[]) => {
     if (!selectedHotel) return false;
     const today = new Date().toISOString().split('T')[0];
-
-    const updateData = {
-        [`${mealType}_checks`]: checks,
-    };
+    const updateData = { [`${mealType}_checks`]: checks };
 
     const { error } = await supabase
       .from('map_fap_checklist')
@@ -99,7 +134,6 @@ export function useMapFap() {
       return false;
     }
     
-    // Atualiza o estado local para uma resposta visual imediata
     setChecklist(prev => {
         const existingIndex = prev.findIndex(c => c.reservation_id === reservationId);
         if (existingIndex > -1) {
