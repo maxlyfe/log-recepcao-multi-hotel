@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { X, Share2, Loader2 } from 'lucide-react';
 import { useLogStore } from '../store';
 import { useTutorials } from '../hooks/useTutorials';
@@ -11,9 +11,8 @@ interface ShareTutorialModalProps {
 
 export default function ShareTutorialModal({ tutorial, onClose }: ShareTutorialModalProps) {
   const { hotels, selectedHotel } = useLogStore();
-  const { shareTutorial } = useTutorials(selectedHotel?.id || '');
+  const { shareTutorial, isLoading } = useTutorials(selectedHotel?.id || '');
   const [selectedHotelIds, setSelectedHotelIds] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
 
   const availableHotels = hotels.filter(h => h.id !== selectedHotel?.id);
 
@@ -30,16 +29,8 @@ export default function ShareTutorialModal({ tutorial, onClose }: ShareTutorialM
       alert("Selecione pelo menos um hotel para compartilhar.");
       return;
     }
-    setIsLoading(true);
-    try {
-      await shareTutorial(tutorial.id, selectedHotelIds);
-      onClose();
-    } catch (error) {
-      alert("Erro ao compartilhar o tutorial.");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
+    await shareTutorial(tutorial.id, selectedHotelIds);
+    onClose();
   };
 
   return (
@@ -71,7 +62,7 @@ export default function ShareTutorialModal({ tutorial, onClose }: ShareTutorialM
           <button
             onClick={handleShare}
             disabled={isLoading || selectedHotelIds.length === 0}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 disabled:opacity-50"
+            className="luxury-button px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 disabled:opacity-50"
           >
             {isLoading ? <Loader2 className="animate-spin" /> : <Share2 />}
             Compartilhar

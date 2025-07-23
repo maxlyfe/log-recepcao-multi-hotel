@@ -1,6 +1,14 @@
+import React from 'react';
 import { Bell, Check, X } from 'lucide-react';
+import type { TutorialShare } from '../types/tutorial';
 
-export default function PendingSharesNotification({ shares, onAccept, onReject }) {
+interface PendingSharesNotificationProps {
+  shares: TutorialShare[];
+  onAccept: (shareId: string) => void;
+  onReject: (shareId: string) => void;
+}
+
+export default function PendingSharesNotification({ shares, onAccept, onReject }: PendingSharesNotificationProps) {
   if (!shares || shares.length === 0) return null;
 
   return (
