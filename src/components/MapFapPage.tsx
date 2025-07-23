@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { MapFapReservation } from '../types/mapfap';
 
-// --- Componente de Card para Impressão (Layout Otimizado para FAP) ---
+// --- Componente de Card para Impressão ---
 const PrintableReservationCard = ({ reservation }: { reservation: MapFapReservation }) => {
     const today = new Date().toISOString().split('T')[0];
     const isCheckinDay = reservation.start_date === today;
@@ -21,7 +21,6 @@ const PrintableReservationCard = ({ reservation }: { reservation: MapFapReservat
         return null;
     }
 
-    // A otimização se aplica se o hóspede tem direito a ambas as refeições no dia
     const useOptimizedFapLayout = hasLunch && hasDinner;
 
     return (
@@ -34,7 +33,6 @@ const PrintableReservationCard = ({ reservation }: { reservation: MapFapReservat
                 <p><strong>Pensão:</strong> {reservation.pension_type} ({ (reservation.guest_names || []).length } hóspedes)</p>
                 
                 {useOptimizedFapLayout ? (
-                    // NOVO LAYOUT OTIMIZADO PARA FAP
                     <div className="meal-group fap-optimized">
                         <div className="fap-header">
                             <span>Hóspede</span>
@@ -56,7 +54,6 @@ const PrintableReservationCard = ({ reservation }: { reservation: MapFapReservat
                         </ul>
                     </div>
                 ) : (
-                    // LAYOUT ANTIGO (PARA MAP ou FAP com 1 refeição no dia)
                     <div className="meals-section">
                         {hasLunch && (
                             <div className="meal-group">
@@ -91,9 +88,11 @@ const PrintableReservationCard = ({ reservation }: { reservation: MapFapReservat
     );
 };
 
-// --- Componente de Relatório com a Solução Definitiva de Impressão ---
-const PrintableCardReport = ({ reservations }: { reservations: MapFapReservation[] }) => {
-    const hotelName = "Costa do Sol Boutique Hotel";
+// --- Componente de Relatório ---
+// MUDANÇA AQUI: Recebe "selectedHotel" como propriedade
+const PrintableCardReport = ({ reservations, selectedHotel }: { reservations: MapFapReservation[], selectedHotel: any }) => {
+    // MUDANÇA AQUI: Usa o nome do hotel da propriedade, com um fallback
+    const hotelName = selectedHotel?.name || "Hotel";
     
     const reservationsWithMealsToday = reservations.filter(res => {
         const today = new Date().toISOString().split('T')[0];
@@ -106,8 +105,7 @@ const PrintableCardReport = ({ reservations }: { reservations: MapFapReservation
 
     return (
         <div className="hidden print:block printable-area">
-            <style type="text/css" media="print">
-                {`
+            <style type="text/css" media="print">{/* ... estilos permanecem os mesmos ... */`
                 body * {
                     visibility: hidden;
                 }
@@ -205,7 +203,6 @@ const PrintableCardReport = ({ reservations }: { reservations: MapFapReservation
                     border: 1px solid #000;
                     flex-shrink: 0;
                 }
-                /* NOVOS ESTILOS PARA O LAYOUT FAP OTIMIZADO */
                 .fap-optimized ul {
                     margin-top: 8px;
                 }
@@ -246,8 +243,7 @@ const PrintableCardReport = ({ reservations }: { reservations: MapFapReservation
                     margin-top: 3rem;
                     grid-column: 1 / -1;
                 }
-                `}
-            </style>
+            `}</style>
             
             <header className="report-print-header">
                 <h1>MAP/FAP - {hotelName}</h1>
@@ -270,6 +266,7 @@ const PrintableCardReport = ({ reservations }: { reservations: MapFapReservation
 };
 
 export default function MapFapPage() {
+    // MUDANÇA AQUI: Captura "selectedHotel" do hook
     const { 
       reservationsForToday, 
       activeAndFutureReservations, 
@@ -277,7 +274,8 @@ export default function MapFapPage() {
       checklist, 
       isLoading, 
       fetchReservations,
-      deleteReservation
+      deleteReservation,
+      selectedHotel
     } = useMapFap();
     
     const [searchTerm, setSearchTerm] = useState('');
@@ -326,6 +324,8 @@ export default function MapFapPage() {
         setEditingReservation(null);
     };
 
+
+
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         const userTimezoneOffset = date.getTimezoneOffset() * 60000;
@@ -338,7 +338,8 @@ export default function MapFapPage() {
 
     return (
         <>
-            <PrintableCardReport reservations={reservationsForToday} />
+            {/* MUDANÇA AQUI: Passa "selectedHotel" como propriedade */}
+            <PrintableCardReport reservations={reservationsForToday} selectedHotel={selectedHotel} />
 
             <div className="space-y-8 print:hidden">
                 <div className="flex justify-between items-center">

@@ -148,5 +148,18 @@ export function useMapFap() {
     return true;
   };
 
-  return { reservationsForToday, activeAndFutureReservations, pastReservations, checklist, isLoading, fetchReservations: fetchData, createReservation, updateReservation, deleteReservation, upsertChecklistStatus };
+  // MUDANÇA AQUI: Adicionado "selectedHotel" ao retorno
+  return { 
+      reservationsForToday, 
+      activeAndFutureReservations, 
+      pastReservations, 
+      checklist, 
+      isLoading, 
+      fetchReservations: fetchData, 
+      createReservation, 
+      updateReservation, 
+      deleteReservation, 
+      upsertChecklistStatus,
+      selectedHotel 
+  };
 }
