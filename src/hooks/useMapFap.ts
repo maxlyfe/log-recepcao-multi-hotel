@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useLogStore } from '../store';
 import type { MapFapReservation, MapFapChecklist } from '../types/mapfap';
+import { format } from 'date-fns'; // Adicionado para formatação de data
 
 export function useMapFap() {
   const { selectedHotel, checkPendingMapFap } = useLogStore();
@@ -14,7 +15,8 @@ export function useMapFap() {
   const fetchData = useCallback(async () => {
     if (!selectedHotel) return;
     setIsLoading(true);
-    const today = new Date().toISOString().split('T')[0];
+    // MUDANÇA AQUI: Usa a data local para definir "hoje"
+    const today = format(new Date(), 'yyyy-MM-dd');
 
     const { data: allReservations, error } = await supabase
       .from('map_fap_reservations')
@@ -119,7 +121,7 @@ export function useMapFap() {
 
   const upsertChecklistStatus = async (reservationId: string, mealType: 'lunch' | 'dinner', checks: boolean[]) => {
     if (!selectedHotel) return false;
-    const today = new Date().toISOString().split('T')[0];
+    const today = format(new Date(), 'yyyy-MM-dd'); // MUDANÇA AQUI: Usa a data local também
     const updateData = { [`${mealType}_checks`]: checks };
 
     const { error } = await supabase
@@ -148,7 +150,6 @@ export function useMapFap() {
     return true;
   };
 
-  // MUDANÇA AQUI: Adicionado "selectedHotel" ao retorno
   return { 
       reservationsForToday, 
       activeAndFutureReservations, 

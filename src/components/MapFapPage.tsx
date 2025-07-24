@@ -10,7 +10,7 @@ import type { MapFapReservation } from '../types/mapfap';
 
 // --- Componente de Card para Impressão ---
 const PrintableReservationCard = ({ reservation }: { reservation: MapFapReservation }) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = format(new Date(), 'yyyy-MM-dd');
     const isCheckinDay = reservation.start_date === today;
     const isCheckoutDay = reservation.end_date === today;
 
@@ -89,13 +89,11 @@ const PrintableReservationCard = ({ reservation }: { reservation: MapFapReservat
 };
 
 // --- Componente de Relatório ---
-// MUDANÇA AQUI: Recebe "selectedHotel" como propriedade
 const PrintableCardReport = ({ reservations, selectedHotel }: { reservations: MapFapReservation[], selectedHotel: any }) => {
-    // MUDANÇA AQUI: Usa o nome do hotel da propriedade, com um fallback
     const hotelName = selectedHotel?.name || "Hotel";
     
     const reservationsWithMealsToday = reservations.filter(res => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = format(new Date(), 'yyyy-MM-dd');
         const isCheckinDay = res.start_date === today;
         const isCheckoutDay = res.end_date === today;
         const hasLunch = res.pension_type === 'FAP' && !isCheckinDay;
@@ -105,7 +103,7 @@ const PrintableCardReport = ({ reservations, selectedHotel }: { reservations: Ma
 
     return (
         <div className="hidden print:block printable-area">
-            <style type="text/css" media="print">{/* ... estilos permanecem os mesmos ... */`
+            <style type="text/css" media="print">{`
                 body * {
                     visibility: hidden;
                 }
@@ -266,7 +264,6 @@ const PrintableCardReport = ({ reservations, selectedHotel }: { reservations: Ma
 };
 
 export default function MapFapPage() {
-    // MUDANÇA AQUI: Captura "selectedHotel" do hook
     const { 
       reservationsForToday, 
       activeAndFutureReservations, 
@@ -284,6 +281,9 @@ export default function MapFapPage() {
     const [emblaRef, emblaApi] = useEmblaCarousel({ align: 'start', dragFree: true });
     const [prevBtnDisabled, setPrevBtnDisabled] = useState(true);
     const [nextBtnDisabled, setNextBtnDisabled] = useState(true);
+
+    // MUDANÇA AQUI: Cria a data formatada para exibição
+    const displayDate = format(new Date(), "eeee, dd 'de' MMMM", { locale: ptBR });
 
     const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
     const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
@@ -324,8 +324,6 @@ export default function MapFapPage() {
         setEditingReservation(null);
     };
 
-
-
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         const userTimezoneOffset = date.getTimezoneOffset() * 60000;
@@ -338,7 +336,6 @@ export default function MapFapPage() {
 
     return (
         <>
-            {/* MUDANÇA AQUI: Passa "selectedHotel" como propriedade */}
             <PrintableCardReport reservations={reservationsForToday} selectedHotel={selectedHotel} />
 
             <div className="space-y-8 print:hidden">
@@ -364,8 +361,12 @@ export default function MapFapPage() {
                 </div>
 
                 <div className="glass-effect p-6 rounded-2xl">
+                    {/* MUDANÇA AQUI: Adiciona a data abaixo do título */}
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-medium">Checklist do Dia</h3>
+                        <div>
+                            <h3 className="text-xl font-medium">Checklist do Dia</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{displayDate}</p>
+                        </div>
                         <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-900/20">
                            <Printer size={16} /> Imprimir Relatório
                         </button>

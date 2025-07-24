@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Moon, Sun, User, Users, Utensils } from 'lucide-react';
 import type { MapFapReservation, MapFapChecklist } from '../types/mapfap';
 import { useMapFap } from '../hooks/useMapFap';
+import { format } from 'date-fns'; // Adicionado para formatação de data
 
 // --- Subcomponente para o Card do Checklist ---
 interface ChecklistCardProps {
@@ -11,7 +12,8 @@ interface ChecklistCardProps {
 
 const ChecklistCard = ({ reservation, checklistEntry }: ChecklistCardProps) => {
   const { upsertChecklistStatus } = useMapFap();
-  const today = new Date().toISOString().split('T')[0];
+  // MUDANÇA AQUI: Usa a data local para definir "hoje"
+  const today = format(new Date(), 'yyyy-MM-dd');
   const isCheckinDay = reservation.start_date === today;
   const isCheckoutDay = reservation.end_date === today;
 
