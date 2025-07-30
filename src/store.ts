@@ -190,7 +190,7 @@ export const useLogStore = create<LogStore>((set, get) => ({
 
     if (checklistError) {
       console.error("Error fetching checklist for pending check:", checklistError);
-      return set({ hasPendingMapFap: true }); // Assume pending if checklist fails
+      return set({ hasPendingMapFap: true });
     }
 
     let hasPending = false;
@@ -248,11 +248,17 @@ export const useLogStore = create<LogStore>((set, get) => ({
   fetchOpenEntries: async () => {
     const { selectedHotel } = get();
     if (!selectedHotel) return;
+    // CORREÇÃO: Adicionado a busca de comentários para as ocorrências abertas
     const { data, error } = await supabase
         .from('log_entries')
-        .select(`*, log:logs!log_id(receptionist, start_time)`)
+        .select(`
+          *, 
+          comments:log_entries!reply_to(id, text, timestamp, created_by),
+          log:logs!log_id(receptionist, start_time)
+        `)
         .eq('hotel_id', selectedHotel.id)
         .in('status', ['open', 'in_progress']);
+
     if (error) throw error;
     const entriesWithFlag = (data || []).map(e => ({...e, fromPreviousLog: true, log_receptionist: e.log.receptionist, log_start_time: e.log.start_time}));
     set({ openEntries: entriesWithFlag });
