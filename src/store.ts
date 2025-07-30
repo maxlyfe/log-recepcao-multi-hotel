@@ -250,14 +250,9 @@ export const useLogStore = create<LogStore>((set, get) => ({
     if (!selectedHotel) return;
     const { data, error } = await supabase
         .from('log_entries')
-        .select(`
-          *, 
-          comments:log_entries!reply_to(id, text, timestamp, created_by),
-          log:logs!log_id(receptionist, start_time)
-        `)
+        .select(`*, comments:log_entries!reply_to(id, text, timestamp, created_by), log:logs!log_id(receptionist, start_time)`)
         .eq('hotel_id', selectedHotel.id)
         .in('status', ['open', 'in_progress']);
-
     if (error) throw error;
     const entriesWithFlag = (data || []).map(e => ({...e, fromPreviousLog: true, log_receptionist: e.log.receptionist, log_start_time: e.log.start_time}));
     set({ openEntries: entriesWithFlag });
@@ -333,7 +328,21 @@ export const useLogStore = create<LogStore>((set, get) => ({
   editLogEntry: async (logId, entryId, newText, editor) => {
     const { data: oldEntry, error: fetchError } = await supabase.from('log_entries').select('text').eq('id', entryId).single();
     if (fetchError || !oldEntry) throw fetchError || new Error("Entry not found");
-    await supabase.from('edit_history').insert([{ entity_type: 'log_entry', entity_id: entryId, previous_value: { text: oldEntry.text }, edited_by: editor }]);
+    
+    // *** ALTERAÇÃO APLICADA AQUI ***
+    // Salva tanto o valor antigo quanto o novo no registro do histórico.
+    const changeRecord = {
+        old: { text: oldEntry.text },
+        new: { text: newText }
+    };
+
+    await supabase.from('edit_history').insert([{ 
+        entity_type: 'log_entry', 
+        entity_id: entryId, 
+        previous_value: changeRecord, // A coluna 'previous_value' agora armazena todo o registro da mudança
+        edited_by: editor 
+    }]);
+    
     const { error: updateError } = await supabase.from('log_entries').update({ text: newText, last_edited_at: new Date(), edited_by: editor }).eq('id', entryId);
     if (updateError) throw updateError;
     await get().initializeLogState();
@@ -343,7 +352,21 @@ export const useLogStore = create<LogStore>((set, get) => ({
     const { data: oldLog, error: fetchError } = await supabase.from('logs').select('*').eq('id', logId).single();
     if (fetchError || !oldLog) throw fetchError || new Error("Log not found");
     
-    await supabase.from('edit_history').insert([{ entity_type: 'shift_values', entity_id: logId, previous_value: mapSupabaseLogToLogObject(oldLog).startValues || {}, edited_by: editor }]);
+    const oldValues = mapSupabaseLogToLogObject(oldLog).startValues || {};
+
+    // *** ALTERAÇÃO APLICADA AQUI ***
+    // Salva tanto os valores antigos quanto os novos no registro do histórico.
+    const changeRecord = {
+        old: oldValues,
+        new: newValues
+    };
+
+    await supabase.from('edit_history').insert([{ 
+        entity_type: 'shift_values', 
+        entity_id: logId, 
+        previous_value: changeRecord, // A coluna 'previous_value' agora armazena todo o registro da mudança
+        edited_by: editor 
+    }]);
     
     const valuesToUpdate = {
       cash_brl_start: newValues.cash_brl,

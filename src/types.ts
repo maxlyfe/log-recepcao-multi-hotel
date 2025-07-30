@@ -1,3 +1,80 @@
+// types.ts
+
+export interface LogEntry {
+  id: string;
+  log_id: string; // Adicionado para referência
+  text: string;
+  timestamp: string;
+  reply_to?: string;
+  comments?: LogEntry[];
+  comment_count?: number;
+  status: 'open' | 'in_progress' | 'closed';
+  last_edited_at?: string;
+  edited_by?: string;
+  // Adicionado para ocorrências de turnos anteriores
+  fromPreviousLog?: boolean;
+  log_receptionist?: string;
+  log_start_time?: string;
+}
+
+// Este tipo agora será usado apenas para o histórico de ocorrências
+export interface EditHistoryItem {
+  id: string;
+  entity_type: 'log_entry' | 'shift_values';
+  entity_id: string;
+  previous_value: any; // Mantido como 'any' para o histórico antigo
+  edited_at: string;
+  edited_by: string;
+}
+
+// NOVO TIPO para o histórico de valores
+export interface ShiftValuesHistoryItem {
+    id: string;
+    log_id: string;
+    edited_at: string;
+    edited_by: string;
+    cash_brl: number;
+    envelope_brl: number;
+    cash_usd: number;
+    pens_count: number;
+    calculator: number;
+    phone: number;
+    car_key: number;
+    adapter: number;
+    umbrella: number;
+    highlighter: number;
+    cards_towels: number;
+}
+
+export interface ShiftValues {
+  cash_brl: number;
+  envelope_brl: number;
+  cash_usd: number;
+  pens_count: number;
+  calculator: number;
+  phone: number;
+  car_key: number;
+  adapter: number;
+  umbrella: number;
+  highlighter: number;
+  cards_towels: number;
+}
+
+export interface Log {
+  id: string;
+  receptionist: string;
+  start_time: string;
+  end_time: string | null;
+  status: 'active' | 'completed';
+  hotel_id: string;
+  entries: LogEntry[];
+  startValues?: ShiftValues;
+  endValues?: ShiftValues;
+  values_last_edited_at?: string;
+  values_edited_by?: string;
+}
+
+
 export interface LogEntry {
   id: string;
   text: string;
