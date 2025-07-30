@@ -248,7 +248,6 @@ export const useLogStore = create<LogStore>((set, get) => ({
   fetchOpenEntries: async () => {
     const { selectedHotel } = get();
     if (!selectedHotel) return;
-    // CORREÇÃO: Adicionado a busca de comentários para as ocorrências abertas
     const { data, error } = await supabase
         .from('log_entries')
         .select(`
@@ -343,9 +342,28 @@ export const useLogStore = create<LogStore>((set, get) => ({
   editShiftValues: async (logId, newValues, editor) => {
     const { data: oldLog, error: fetchError } = await supabase.from('logs').select('*').eq('id', logId).single();
     if (fetchError || !oldLog) throw fetchError || new Error("Log not found");
-    await supabase.from('edit_history').insert([{ entity_type: 'shift_values', entity_id: logId, previous_value: oldLog, edited_by: editor }]);
-    const { error: updateError } = await supabase.from('logs').update({ ...newValues, values_last_edited_at: new Date(), values_edited_by: editor }).eq('id', logId);
+    
+    await supabase.from('edit_history').insert([{ entity_type: 'shift_values', entity_id: logId, previous_value: mapSupabaseLogToLogObject(oldLog).startValues || {}, edited_by: editor }]);
+    
+    const valuesToUpdate = {
+      cash_brl_start: newValues.cash_brl,
+      envelope_brl_start: newValues.envelope_brl,
+      cash_usd_start: newValues.cash_usd,
+      pens_count_start: newValues.pens_count,
+      calculator_start: newValues.calculator,
+      phone_start: newValues.phone,
+      car_key_start: newValues.car_key,
+      adapter_start: newValues.adapter,
+      umbrella_start: newValues.umbrella,
+      highlighter_start: newValues.highlighter,
+      cards_towels_start: newValues.cards_towels,
+      values_last_edited_at: new Date().toISOString(),
+      values_edited_by: editor,
+    };
+
+    const { error: updateError } = await supabase.from('logs').update(valuesToUpdate).eq('id', logId);
     if (updateError) throw updateError;
+    
     await get().initializeLogState();
   },
 
