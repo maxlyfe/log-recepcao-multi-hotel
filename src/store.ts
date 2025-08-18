@@ -6,8 +6,9 @@ import type { Log, LogEntry, ShiftValues, Hotel, EditHistoryItem } from './types
 const mapSupabaseLogToLogObject = (logData: any): Log => {
   const {
     id, receptionist, start_time, end_time, status, hotel_id,
-    cash_brl_start, envelope_brl_start, cash_usd_start, pens_count_start, calculator_start, phone_start, car_key_start, adapter_start, umbrella_start, highlighter_start, cards_towels_start,
-    cash_brl_end, envelope_brl_end, cash_usd_end, pens_count_end, calculator_end, phone_end, car_key_end, adapter_end, umbrella_end, highlighter_end, cards_towels_end,
+    // *** ALTERAÇÃO APLICADA AQUI ***
+    cash_brl_start, envelope_brl_start, cash_usd_start, cash_dollar_brl_part_start, pens_count_start, calculator_start, phone_start, car_key_start, adapter_start, umbrella_start, highlighter_start, cards_towels_start,
+    cash_brl_end, envelope_brl_end, cash_usd_end, cash_dollar_brl_part_end, pens_count_end, calculator_end, phone_end, car_key_end, adapter_end, umbrella_end, highlighter_end, cards_towels_end,
     values_last_edited_at, values_edited_by, entries
   } = logData;
 
@@ -22,7 +23,9 @@ const mapSupabaseLogToLogObject = (logData: any): Log => {
     startValues: {
       cash_brl: cash_brl_start,
       envelope_brl: envelope_brl_start,
-      cash_usd: cash_usd_start,
+      // *** ALTERAÇÃO APLICADA AQUI ***
+      cash_dollar_usd_part: cash_usd_start, // Mapeia a coluna antiga para o novo nome
+      cash_dollar_brl_part: cash_dollar_brl_part_start, // Mapeia a nova coluna
       pens_count: pens_count_start,
       calculator: calculator_start,
       phone: phone_start,
@@ -35,7 +38,9 @@ const mapSupabaseLogToLogObject = (logData: any): Log => {
     endValues: end_time ? {
       cash_brl: cash_brl_end,
       envelope_brl: envelope_brl_end,
-      cash_usd: cash_usd_end,
+      // *** ALTERAÇÃO APLICADA AQUI ***
+      cash_dollar_usd_part: cash_usd_end,
+      cash_dollar_brl_part: cash_dollar_brl_part_end,
       pens_count: pens_count_end,
       calculator: calculator_end,
       phone: phone_end,
@@ -199,8 +204,6 @@ export const useLogStore = create<LogStore>((set, get) => ({
       const guestCount = (res.guest_names || []).length;
       const isCheckoutDay = res.end_date === today;
 
-      // *** ALTERAÇÃO APLICADA AQUI ***
-      // Regra de negócio atualizada para a verificação de pendências.
       const hasLunch = res.pension_type === 'FAP' && !isCheckoutDay;
       const hasDinner = (res.pension_type === 'FAP' || res.pension_type === 'MAP') && !isCheckoutDay;
 
@@ -285,8 +288,20 @@ export const useLogStore = create<LogStore>((set, get) => ({
   addLog: async ({ receptionist, startValues }) => {
     const { selectedHotel, initializeLogState } = get();
     if (!selectedHotel) return;
+    // *** ALTERAÇÃO APLICADA AQUI ***
     const valuesToInsert = {
-        cash_brl_start: startValues.cash_brl, envelope_brl_start: startValues.envelope_brl, cash_usd_start: startValues.cash_usd, pens_count_start: startValues.pens_count, calculator_start: startValues.calculator, phone_start: startValues.phone, car_key_start: startValues.car_key, adapter_start: startValues.adapter, umbrella_start: startValues.umbrella, highlighter_start: startValues.highlighter, cards_towels_start: startValues.cards_towels,
+        cash_brl_start: startValues.cash_brl, 
+        envelope_brl_start: startValues.envelope_brl, 
+        cash_usd_start: startValues.cash_dollar_usd_part, // Salva no campo antigo de USD
+        cash_dollar_brl_part_start: startValues.cash_dollar_brl_part, // Salva no novo campo de BRL
+        pens_count_start: startValues.pens_count, 
+        calculator_start: startValues.calculator, 
+        phone_start: startValues.phone, 
+        car_key_start: startValues.car_key, 
+        adapter_start: startValues.adapter, 
+        umbrella_start: startValues.umbrella, 
+        highlighter_start: startValues.highlighter, 
+        cards_towels_start: startValues.cards_towels,
     };
     const { data, error } = await supabase.from('logs').insert([{ receptionist, start_time: new Date(), status: 'active', hotel_id: selectedHotel.id, ...valuesToInsert }]).select().single();
     if (error) throw error;
@@ -304,8 +319,20 @@ export const useLogStore = create<LogStore>((set, get) => ({
   finishCurrentLog: async (endValues) => {
     const { currentLog, initializeLogState } = get();
     if (!currentLog) return;
+    // *** ALTERAÇÃO APLICADA AQUI ***
     const valuesToUpdate = {
-        cash_brl_end: endValues.cash_brl, envelope_brl_end: endValues.envelope_brl, cash_usd_end: endValues.cash_usd, pens_count_end: endValues.pens_count, calculator_end: endValues.calculator, phone_end: endValues.phone, car_key_end: endValues.car_key, adapter_end: endValues.adapter, umbrella_end: endValues.umbrella, highlighter_end: endValues.highlighter, cards_towels_end: endValues.cards_towels,
+        cash_brl_end: endValues.cash_brl, 
+        envelope_brl_end: endValues.envelope_brl, 
+        cash_usd_end: endValues.cash_dollar_usd_part,
+        cash_dollar_brl_part_end: endValues.cash_dollar_brl_part,
+        pens_count_end: endValues.pens_count, 
+        calculator_end: endValues.calculator, 
+        phone_end: endValues.phone, 
+        car_key_end: endValues.car_key, 
+        adapter_end: endValues.adapter, 
+        umbrella_end: endValues.umbrella, 
+        highlighter_end: endValues.highlighter, 
+        cards_towels_end: endValues.cards_towels,
     };
     const { error } = await supabase.from('logs').update({ end_time: new Date(), status: 'completed', ...valuesToUpdate }).eq('id', currentLog.id);
     if (error) throw error;
@@ -365,10 +392,12 @@ export const useLogStore = create<LogStore>((set, get) => ({
         edited_by: editor 
     }]);
     
+    // *** ALTERAÇÃO APLICADA AQUI ***
     const valuesToUpdate = {
       cash_brl_start: newValues.cash_brl,
       envelope_brl_start: newValues.envelope_brl,
-      cash_usd_start: newValues.cash_usd,
+      cash_usd_start: newValues.cash_dollar_usd_part,
+      cash_dollar_brl_part_start: newValues.cash_dollar_brl_part,
       pens_count_start: newValues.pens_count,
       calculator_start: newValues.calculator,
       phone_start: newValues.phone,
