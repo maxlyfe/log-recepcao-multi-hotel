@@ -5,7 +5,6 @@ import type { ShiftValues, LogEntry } from '../types';
 import EditHistoryModal from './EditHistoryModal';
 import { useTheme } from '../hooks/useTheme';
 
-// *** ALTERAÇÃO APLICADA AQUI ***
 const defaultShiftValues: ShiftValues = {
   cash_brl: 0,
   envelope_brl: 0,
@@ -21,7 +20,6 @@ const defaultShiftValues: ShiftValues = {
   cards_towels: 0,
 };
 
-// *** ALTERAÇÃO APLICADA AQUI ***
 const fieldLabels: Record<keyof ShiftValues, string> = {
   cash_brl: "Fundo de Caixa",
   envelope_brl: "Caixa do Dia",
@@ -61,7 +59,6 @@ function NewLog() {
   const [editingValues, setEditingValues] = useState(false);
   const [isStartingLog, setIsStartingLog] = useState(false);
   
-  // *** ALTERAÇÃO APLICADA AQUI ***
   const monetaryKeys: (keyof ShiftValues)[] = ['cash_brl', 'envelope_brl', 'cash_dollar_usd_part', 'cash_dollar_brl_part'];
 
   const { 
@@ -122,12 +119,17 @@ function NewLog() {
     return <span className={className}>{formattedDiff}</span>;
   };
 
+  // *** ALTERAÇÃO APLICADA AQUI ***
+  // A função foi reestruturada para agrupar os caixas de forma mais clara.
   const renderShiftValuesComparison = (
       start: ShiftValues, 
       end: ShiftValues, 
       onChange: (field: keyof ShiftValues, value: number) => void
   ) => {
+      const receptionKeys: (keyof ShiftValues)[] = ['cash_brl', 'envelope_brl'];
+      const dollarKeys: (keyof ShiftValues)[] = ['cash_dollar_usd_part', 'cash_dollar_brl_part'];
       const itemKeys: (keyof ShiftValues)[] = [ 'pens_count', 'calculator', 'phone', 'car_key', 'adapter', 'umbrella', 'highlighter', 'cards_towels' ];
+      
       const renderItemCard = (key: keyof ShiftValues) => {
           const isCurrency = monetaryKeys.includes(key);
           const currencyType = key === 'cash_dollar_usd_part' ? 'USD' : 'BRL';
@@ -162,11 +164,16 @@ function NewLog() {
               </div>
           );
       };
+      
       return (
-          <div className="space-y-6">
+          <div className="space-y-8">
               <div>
-                  <h3 className="text-xl font-serif text-blue-600 dark:text-blue-400 mb-4 pb-2 border-b border-blue-200 dark:border-blue-800">Valores Monetários</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{monetaryKeys.map(renderItemCard)}</div>
+                  <h3 className="text-xl font-serif text-blue-600 dark:text-blue-400 mb-4 pb-2 border-b border-blue-200 dark:border-blue-800">Caixa da Recepção (BRL)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{receptionKeys.map(renderItemCard)}</div>
+              </div>
+              <div>
+                  <h3 className="text-xl font-serif text-blue-600 dark:text-blue-400 mb-4 pb-2 border-b border-blue-200 dark:border-blue-800">Caixa de Câmbio (Dólar)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{dollarKeys.map(renderItemCard)}</div>
               </div>
               <div>
                   <h3 className="text-xl font-serif text-blue-600 dark:text-blue-400 mb-4 pb-2 border-b border-blue-200 dark:border-blue-800">Itens da Recepção</h3>
@@ -203,7 +210,6 @@ function NewLog() {
   const copyPreviousValues = () => { if (previousLog?.endValues) { setStartValues(previousLog.endValues); } };
   const toggleComments = (entryId: string) => { setExpandedComments(prev => prev.includes(entryId) ? prev.filter(id => id !== entryId) : [...prev, entryId]); };
   
-  // *** ALTERAÇÃO APLICADA AQUI ***
   const renderMoneyDisplay = (values: ShiftValues) => ( 
     <div className="money-display">
       <div className="space-y-2">
