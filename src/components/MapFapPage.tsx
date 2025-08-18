@@ -11,11 +11,12 @@ import type { MapFapReservation } from '../types/mapfap';
 // --- Componente de Card para Impressão ---
 const PrintableReservationCard = ({ reservation }: { reservation: MapFapReservation }) => {
     const today = format(new Date(), 'yyyy-MM-dd');
-    const isCheckinDay = reservation.start_date === today;
     const isCheckoutDay = reservation.end_date === today;
 
-    const hasLunch = reservation.pension_type === 'FAP' && !isCheckinDay;
-    const hasDinner = (reservation.pension_type === 'FAP' && !isCheckoutDay) || reservation.pension_type === 'MAP';
+    // *** ALTERAÇÃO APLICADA AQUI ***
+    // Regra de negócio atualizada para as refeições na impressão.
+    const hasLunch = reservation.pension_type === 'FAP' && !isCheckoutDay;
+    const hasDinner = (reservation.pension_type === 'FAP' || reservation.pension_type === 'MAP') && !isCheckoutDay;
 
     if (!hasLunch && !hasDinner) {
         return null;
@@ -94,10 +95,9 @@ const PrintableCardReport = ({ reservations, selectedHotel }: { reservations: Ma
     
     const reservationsWithMealsToday = reservations.filter(res => {
         const today = format(new Date(), 'yyyy-MM-dd');
-        const isCheckinDay = res.start_date === today;
         const isCheckoutDay = res.end_date === today;
-        const hasLunch = res.pension_type === 'FAP' && !isCheckinDay;
-        const hasDinner = (res.pension_type === 'FAP' && !isCheckoutDay) || res.pension_type === 'MAP';
+        const hasLunch = res.pension_type === 'FAP' && !isCheckoutDay;
+        const hasDinner = (res.pension_type === 'FAP' || res.pension_type === 'MAP') && !isCheckoutDay;
         return hasLunch || hasDinner;
     });
 
@@ -282,7 +282,6 @@ export default function MapFapPage() {
     const [prevBtnDisabled, setPrevBtnDisabled] = useState(true);
     const [nextBtnDisabled, setNextBtnDisabled] = useState(true);
 
-    // MUDANÇA AQUI: Cria a data formatada para exibição
     const displayDate = format(new Date(), "eeee, dd 'de' MMMM", { locale: ptBR });
 
     const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
@@ -361,7 +360,6 @@ export default function MapFapPage() {
                 </div>
 
                 <div className="glass-effect p-6 rounded-2xl">
-                    {/* MUDANÇA AQUI: Adiciona a data abaixo do título */}
                     <div className="flex justify-between items-center mb-4">
                         <div>
                             <h3 className="text-xl font-medium">Checklist do Dia</h3>

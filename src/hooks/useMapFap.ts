@@ -15,7 +15,6 @@ export function useMapFap() {
   const fetchData = useCallback(async () => {
     if (!selectedHotel) return;
     setIsLoading(true);
-    // MUDANÇA AQUI: Usa a data local para definir "hoje"
     const today = format(new Date(), 'yyyy-MM-dd');
 
     const { data: allReservations, error } = await supabase
@@ -33,11 +32,21 @@ export function useMapFap() {
 
       (allReservations || []).forEach(res => {
         const reservation = { ...res, guest_names: res.guest_names || [] };
-        if (reservation.end_date < today) {
+        
+        // *** ALTERAÇÃO APLICADA AQUI ***
+        // Se a data de check-out é hoje ou já passou, a reserva é arquivada imediatamente.
+        if (reservation.end_date <= today) {
           pastRes.push(reservation);
         } else {
-          if (reservation.start_date <= today) todayRes.push(reservation);
+          // Se não, a reserva está ativa ou é futura.
+          
+          // Adiciona à lista de 'Ativas e Futuras'.
           futureRes.push(reservation);
+          
+          // Se a reserva já começou (e não é check-out hoje), adiciona ao checklist.
+          if (reservation.start_date <= today) {
+            todayRes.push(reservation);
+          }
         }
       });
       
@@ -121,7 +130,7 @@ export function useMapFap() {
 
   const upsertChecklistStatus = async (reservationId: string, mealType: 'lunch' | 'dinner', checks: boolean[]) => {
     if (!selectedHotel) return false;
-    const today = format(new Date(), 'yyyy-MM-dd'); // MUDANÇA AQUI: Usa a data local também
+    const today = format(new Date(), 'yyyy-MM-dd');
     const updateData = { [`${mealType}_checks`]: checks };
 
     const { error } = await supabase

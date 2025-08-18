@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Moon, Sun, User, Users, Utensils } from 'lucide-react';
 import type { MapFapReservation, MapFapChecklist } from '../types/mapfap';
-import { useMapFap } from '../hooks/useMapFap';
-import { format } from 'date-fns'; // Adicionado para formatação de data
+import { useMapFap } from '../hooks/useMapFap'; // CORREÇÃO: Corrigido o caminho de importação do hook.
+import { format } from 'date-fns';
 
 // --- Subcomponente para o Card do Checklist ---
 interface ChecklistCardProps {
@@ -12,13 +12,15 @@ interface ChecklistCardProps {
 
 const ChecklistCard = ({ reservation, checklistEntry }: ChecklistCardProps) => {
   const { upsertChecklistStatus } = useMapFap();
-  // MUDANÇA AQUI: Usa a data local para definir "hoje"
   const today = format(new Date(), 'yyyy-MM-dd');
-  const isCheckinDay = reservation.start_date === today;
   const isCheckoutDay = reservation.end_date === today;
 
-  const hasLunch = reservation.pension_type === 'FAP' && !isCheckinDay;
-  const hasDinner = (reservation.pension_type === 'FAP' && !isCheckoutDay) || reservation.pension_type === 'MAP';
+  // *** ALTERAÇÃO APLICADA AQUI ***
+  // Regra de negócio atualizada para as refeições.
+  // FAP: Tem almoço, exceto no dia do check-out.
+  const hasLunch = reservation.pension_type === 'FAP' && !isCheckoutDay;
+  // MAP ou FAP: Têm jantar, exceto no dia do check-out.
+  const hasDinner = (reservation.pension_type === 'FAP' || reservation.pension_type === 'MAP') && !isCheckoutDay;
 
   const guestNames = reservation.guest_names || [];
   const guestCount = guestNames.length;

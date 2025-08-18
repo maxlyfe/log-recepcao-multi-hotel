@@ -197,11 +197,12 @@ export const useLogStore = create<LogStore>((set, get) => ({
     for (const res of activeReservations) {
       const checklist = checklistData?.find(c => c.reservation_id === res.id);
       const guestCount = (res.guest_names || []).length;
-      const isCheckinDay = res.start_date === today;
       const isCheckoutDay = res.end_date === today;
 
-      const hasLunch = res.pension_type === 'FAP' && !isCheckinDay;
-      const hasDinner = (res.pension_type === 'FAP' && !isCheckoutDay) || res.pension_type === 'MAP';
+      // *** ALTERAÇÃO APLICADA AQUI ***
+      // Regra de negócio atualizada para a verificação de pendências.
+      const hasLunch = res.pension_type === 'FAP' && !isCheckoutDay;
+      const hasDinner = (res.pension_type === 'FAP' || res.pension_type === 'MAP') && !isCheckoutDay;
 
       if (hasLunch) {
         const lunchChecks = checklist?.lunch_checks || [];
@@ -329,8 +330,6 @@ export const useLogStore = create<LogStore>((set, get) => ({
     const { data: oldEntry, error: fetchError } = await supabase.from('log_entries').select('text').eq('id', entryId).single();
     if (fetchError || !oldEntry) throw fetchError || new Error("Entry not found");
     
-    // *** ALTERAÇÃO APLICADA AQUI ***
-    // Salva tanto o valor antigo quanto o novo no registro do histórico.
     const changeRecord = {
         old: { text: oldEntry.text },
         new: { text: newText }
@@ -339,7 +338,7 @@ export const useLogStore = create<LogStore>((set, get) => ({
     await supabase.from('edit_history').insert([{ 
         entity_type: 'log_entry', 
         entity_id: entryId, 
-        previous_value: changeRecord, // A coluna 'previous_value' agora armazena todo o registro da mudança
+        previous_value: changeRecord,
         edited_by: editor 
     }]);
     
@@ -354,8 +353,6 @@ export const useLogStore = create<LogStore>((set, get) => ({
     
     const oldValues = mapSupabaseLogToLogObject(oldLog).startValues || {};
 
-    // *** ALTERAÇÃO APLICADA AQUI ***
-    // Salva tanto os valores antigos quanto os novos no registro do histórico.
     const changeRecord = {
         old: oldValues,
         new: newValues
@@ -364,7 +361,7 @@ export const useLogStore = create<LogStore>((set, get) => ({
     await supabase.from('edit_history').insert([{ 
         entity_type: 'shift_values', 
         entity_id: logId, 
-        previous_value: changeRecord, // A coluna 'previous_value' agora armazena todo o registro da mudança
+        previous_value: changeRecord,
         edited_by: editor 
     }]);
     
