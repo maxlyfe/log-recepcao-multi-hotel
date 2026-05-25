@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Upload, X, Image as ImageIcon, Link, Loader2 } from 'lucide-react';
 import { useImageUpload } from '../hooks/useImageUpload';
 
@@ -9,9 +9,9 @@ interface ImageUploadFieldProps {
   placeholder?: string;
 }
 
-export default function ImageUploadField({ 
-  value, 
-  onChange, 
+export default function ImageUploadField({
+  value,
+  onChange,
   label = "Imagem",
   placeholder = "URL da imagem ou faça upload"
 }: ImageUploadFieldProps) {
@@ -19,6 +19,12 @@ export default function ImageUploadField({
   const [previewUrl, setPreviewUrl] = useState(value);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadImage, isUploading, uploadProgress } = useImageUpload();
+
+  // Mantém o preview sincronizado se o `value` mudar externamente
+  // (ex.: passos sendo reordenados no modal pai)
+  useEffect(() => {
+    setPreviewUrl(value);
+  }, [value]);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

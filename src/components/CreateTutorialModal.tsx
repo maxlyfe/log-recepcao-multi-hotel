@@ -10,14 +10,22 @@ interface CreateTutorialModalProps {
   onClose: () => void;
 }
 
+// Cada passo carrega um clientId estável usado SÓ como React key.
+// Nunca é enviado para o banco — é removido em handleSave.
+type StepWithKey = CreateStepData & { _clientId: string };
+
+const makeId = () => `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+const emptyStep = (): StepWithKey => ({
+  _clientId: makeId(),
+  title: '', content: '', image_url: '', question: '', options: []
+});
+
 export default function CreateTutorialModal({ tutorial, onClose }: CreateTutorialModalProps) {
   const { selectedHotel } = useLogStore();
   const { createTutorial, updateTutorial, fetchTutorialWithSteps } = useTutorials(selectedHotel?.id || '');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [steps, setSteps] = useState<CreateStepData[]>([
-    { title: '', content: '', image_url: '', question: '', options: [] }
-  ]);
+  const [steps, setSteps] = useState<StepWithKey[]>([emptyStep()]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingTutorial, setLoadingTutorial] = useState(false);
 
@@ -32,6 +40,7 @@ export default function CreateTutorialModal({ tutorial, onClose }: CreateTutoria
             setDescription(fullTutorial.description || '');
             if (fullTutorial.steps && fullTutorial.steps.length > 0) {
               setSteps(fullTutorial.steps.map(step => ({
+                _clientId: makeId(),
                 title: step.title,
                 content: step.content,
                 image_url: step.image_url || '',
@@ -44,7 +53,7 @@ export default function CreateTutorialModal({ tutorial, onClose }: CreateTutoria
                 })) || []
               })));
             } else {
-              setSteps([{ title: '', content: '', image_url: '', question: '', options: [] }]);
+              setSteps([emptyStep()]);
             }
           }
         } catch (error) {
@@ -57,18 +66,18 @@ export default function CreateTutorialModal({ tutorial, onClose }: CreateTutoria
     } else {
       setTitle('');
       setDescription('');
-      setSteps([{ title: '', content: '', image_url: '', question: '', options: [] }]);
+      setSteps([emptyStep()]);
     }
   }, [tutorial?.id]);
 
   const addStep = () => {
-    setSteps(prev => [...prev, { title: '', content: '', image_url: '', question: '', options: [] }]);
+    setSteps(prev => [...prev, emptyStep()]);
   };
 
   const insertStepAt = (afterIndex: number) => {
     setSteps(prev => {
       const next = [...prev];
-      next.splice(afterIndex + 1, 0, { title: '', content: '', image_url: '', question: '', options: [] });
+      next.splice(afterIndex + 1, 0, emptyStep());
       return next;
     });
   };
@@ -144,7 +153,7 @@ export default function CreateTutorialModal({ tutorial, onClose }: CreateTutoria
       const tutorialData = {
         title: title.trim(),
         description: description.trim() || undefined,
-        steps: steps.map(step => ({
+        steps: steps.map(({ _clientId, ...step }) => ({
           ...step,
           title: step.title.trim(),
           content: step.content.trim(),
@@ -252,7 +261,7 @@ export default function CreateTutorialModal({ tutorial, onClose }: CreateTutoria
           {/* Lista de passos com botões de inserir entre eles */}
           <div className="space-y-0">
             {steps.map((step, stepIndex) => (
-              <React.Fragment key={stepIndex}>
+              <React.Fragment key={step._clientId}>
                 {/* Card do passo */}
                 <div className="border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-900/50 overflow-hidden">
 
